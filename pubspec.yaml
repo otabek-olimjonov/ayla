@@ -1,0 +1,68 @@
+name: ayla
+description: Ayla – Your cycle, your way. Women's cycle tracking app for Uzbekistan.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Backend
+  supabase_flutter: ^2.5.0
+
+  # Navigation
+  go_router: ^13.2.0
+
+  # UI / Calendar
+  table_calendar: ^3.1.2
+  google_fonts: ^6.2.1
+  cached_network_image: ^3.3.1
+
+  # Charts
+  fl_chart: ^0.68.0
+
+  # Notifications
+  flutter_local_notifications: ^17.2.2
+  timezone: ^0.9.4
+
+  # PDF export
+  pdf: ^3.11.1
+  printing: ^5.13.0
+
+  # Localization
+  intl: ^0.20.2
+
+  # Local storage (non-sensitive UI prefs only)
+  shared_preferences: ^2.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.9
+  riverpod_generator: ^2.4.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/images/
+    - assets/pregnancy_milestones.json
+
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: "assets/fonts/Nunito[wght].ttf"
+    - family: SourceSans3
+      fonts:
+        - asset: "assets/fonts/SourceSans3[wght].ttf"

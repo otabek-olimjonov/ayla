@@ -1,0 +1,72 @@
+[
+  {
+    "week": 4,
+    "title": "Week 4",
+    "babySize": "Poppy seed",
+    "description": "The embryo implants in the uterine lining. The neural tube begins forming.",
+    "tips": ["Start taking folic acid if you haven't already.", "Avoid alcohol and smoking."]
+  },
+  {
+    "week": 8,
+    "title": "Week 8",
+    "babySize": "Raspberry",
+    "description": "Baby has a heartbeat! Fingers and toes are beginning to form.",
+    "tips": ["Schedule your first prenatal appointment.", "Stay hydrated and eat small frequent meals."]
+  },
+  {
+    "week": 12,
+    "title": "Week 12",
+    "babySize": "Lime",
+    "description": "End of the first trimester. Risk of miscarriage decreases significantly.",
+    "tips": ["First trimester screening tests are usually done this week.", "You may start to feel more energetic."]
+  },
+  {
+    "week": 16,
+    "title": "Week 16",
+    "babySize": "Avocado",
+    "description": "Baby can make facial expressions. You might start feeling movement soon.",
+    "tips": ["Consider starting prenatal yoga.", "Discuss genetic testing options with your doctor."]
+  },
+  {
+    "week": 20,
+    "title": "Week 20",
+    "babySize": "Banana",
+    "description": "Halfway there! The anatomy scan is usually done around this week.",
+    "tips": ["Anatomy ultrasound can reveal the baby's sex if you want to know.", "Sleep on your side for better circulation."]
+  },
+  {
+    "week": 24,
+    "title": "Week 24",
+    "babySize": "Corn",
+    "description": "Baby's lungs are developing. Movements are stronger and more frequent.",
+    "tips": ["Start counting kicks — aim for 10 movements in 2 hours.", "Glucose screening test is typically done at 24–28 weeks."]
+  },
+  {
+    "week": 28,
+    "title": "Week 28",
+    "babySize": "Eggplant",
+    "description": "Third trimester begins. Baby can open and close eyes.",
+    "tips": ["Discuss birth plan options with your midwife or doctor.", "Practice pelvic floor exercises."]
+  },
+  {
+    "week": 32,
+    "title": "Week 32",
+    "babySize": "Squash",
+    "description": "Baby is practicing breathing movements. Most organs are fully developed.",
+    "tips": ["Prepare your hospital bag.", "Braxton Hicks contractions may become more noticeable."]
+  },
+  {
+    "week": 36,
+    "title": "Week 36",
+    "babySize": "Head of lettuce",
+    "description": "Baby is settling into a head-down position. Almost full term!",
+    "tips": ["Attend weekly prenatal check-ups.", "Learn the signs of labour."]
+  },
+  {
+    "week": 40,
+    "title": "Week 40",
+    "babySize": "Watermelon",
+    "description": "Due date week! Baby is ready to meet you.",
+    "tips": ["Stay calm — only 5% of babies arrive on their due date.", "Contact your doctor if contractions are 5 minutes apart or your water breaks."]
+  }
+]

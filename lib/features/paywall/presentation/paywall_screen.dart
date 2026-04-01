@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/errors/failures.dart';
+import '../../../l10n/l10n.dart';
+import '../data/payment_repository.dart';
 
 class PaywallScreen extends ConsumerWidget {
   const PaywallScreen({super.key});
@@ -10,15 +14,16 @@ class PaywallScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Upgrade to Ayla Plus')),
+      appBar: AppBar(title: Text(l.upgradeTitle)),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.screenPadding),
         children: [
           const SizedBox(height: AppSpacing.md),
           Center(
             child: Text(
-              '✨ Unlock everything',
+              '✨ ${l.upgradeTitle}',
               style: theme.textTheme.headlineMedium,
               textAlign: TextAlign.center,
             ),
@@ -127,10 +132,39 @@ class _PaymentSheet extends ConsumerStatefulWidget {
 
 class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
   bool _submitted = false;
+  bool _loading = false;
+  String? _error;
+
+  Future<void> _submit() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) throw const AuthFailure('Not authenticated');
+      await ref.read(paymentRepositoryProvider).submitPaymentRequest(
+            userId: user.id,
+            email: user.email ?? '',
+          );
+      if (mounted) setState(() => _submitted = true);
+    } on NetworkFailure {
+      if (mounted) {
+        setState(() => _error = AppLocalizations.of(context).networkError);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = AppLocalizations.of(context).networkError);
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.screenPadding,
@@ -144,7 +178,7 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
               children: [
                 const Icon(Icons.check_circle, color: AppColors.primary, size: 48),
                 const SizedBox(height: AppSpacing.md),
-                Text("We've received your request! Our team will activate your plan within 24 hours.",
+                Text(l.notifyAfterPayment,
                     style: theme.textTheme.bodyMedium, textAlign: TextAlign.center),
               ],
             )
@@ -152,7 +186,7 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Payment instructions', style: theme.textTheme.titleLarge),
+                Text(l.paymentInstructions, style: theme.textTheme.titleLarge),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'Transfer ${widget.monthly ? '15,000' : '120,000'} UZS to card:\n\n'
@@ -162,12 +196,26 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: Insert into payment_requests via PaymentRepository
-                    setState(() => _submitted = true);
-                  },
-                  child: const Text("I've paid — notify us"),
+                  onPressed: _loading ? null : _submit,
+                  child: _loading
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child:
+                              CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l.notifyAfterPayment),
                 ),
+                if (_error != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                        color:
+                            Theme.of(context).colorScheme.error,
+                        fontSize: 13),
+                  ),
+                ],
               ],
             ),
     );

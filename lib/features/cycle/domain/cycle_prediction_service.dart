@@ -72,6 +72,28 @@ class CyclePrediction {
     final todayDate = DateTime(today.year, today.month, today.day);
     return nextPeriodDate.difference(todayDate).inDays;
   }
+
+  /// Positive = days until ovulation. Negative = ovulation already passed this cycle.
+  int get daysUntilOvulation {
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    return ovulationDay.difference(todayDate).inDays;
+  }
+
+  /// True if today falls inside the fertile window (inclusive).
+  bool get isInFertileWindow {
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    return !todayDate.isBefore(fertileWindowStart) &&
+        !todayDate.isAfter(fertileWindowEnd);
+  }
+
+  /// True if today is ovulation day.
+  bool get isOvulationDay {
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    return todayDate == ovulationDay;
+  }
 }
 
 enum CyclePhase {

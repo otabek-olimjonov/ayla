@@ -86,6 +86,7 @@ class UserProfile {
 
 enum AppMode {
   cycle('cycle'),
+  planPregnancy('plan_pregnancy'),
   pregnancy('pregnancy');
 
   const AppMode(this.value);

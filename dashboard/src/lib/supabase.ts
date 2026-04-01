@@ -12,6 +12,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export type Profile = {
   id: string
   created_at: string
+  email: string | null   // populated from auth.users via trigger
   birth_year: number | null
   cycle_length: number
   period_length: number

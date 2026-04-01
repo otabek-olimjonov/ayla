@@ -2,23 +2,41 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
+import '../../../l10n/l10n.dart';
 import '../../profile/domain/profile_notifier.dart';
 import '../domain/calendar_provider.dart';
 import '../domain/cycle_log.dart';
 
-class CalendarScreen extends ConsumerStatefulWidget {
+class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
 
   @override
-  ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l.calendar)),
+      body: const CalendarBody(),
+    );
+  }
 }
 
-class _CalendarScreenState extends ConsumerState<CalendarScreen> {
+/// Embeddable calendar widget — no Scaffold wrapper.
+/// Use this directly inside a TabBarView or any other container.
+class CalendarBody extends ConsumerStatefulWidget {
+  const CalendarBody({super.key});
+
+  @override
+  ConsumerState<CalendarBody> createState() => _CalendarBodyState();
+}
+
+class _CalendarBodyState extends ConsumerState<CalendarBody> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
@@ -28,94 +46,86 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final logsAsync = ref.watch(calendarLogsProvider);
     final predictionAsync = ref.watch(calendarPredictionProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Calendar')),
-      body: profileAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (profile) {
-          final isPaid = profile.isPaidPlanActive;
-          final logs = logsAsync.valueOrNull ?? {};
-          final prediction = predictionAsync.valueOrNull;
+    return profileAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (profile) {
+        final isPaid = profile.isPaidPlanActive;
+        final logs = logsAsync.valueOrNull ?? {};
+        final prediction = predictionAsync.valueOrNull;
 
-          return Column(
-            children: [
-              TableCalendar(
-                firstDay: DateTime.utc(2020),
-                lastDay: DateTime.utc(2030, 12, 31),
-                focusedDay: _focusedDay,
-                selectedDayPredicate: (d) => isSameDay(d, _selectedDay),
-                calendarFormat: CalendarFormat.month,
-                headerStyle: const HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: true,
+        return Column(
+          children: [
+            TableCalendar(
+              firstDay: DateTime.utc(2020),
+              lastDay: DateTime.utc(2030, 12, 31),
+              focusedDay: _focusedDay,
+              selectedDayPredicate: (d) => isSameDay(d, _selectedDay),
+              calendarFormat: CalendarFormat.month,
+              headerStyle: const HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+              ),
+              calendarStyle: CalendarStyle(
+                todayDecoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
                 ),
-                calendarStyle: CalendarStyle(
-                  todayDecoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  selectedDecoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  outsideDaysVisible: false,
+                selectedDecoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
                 ),
-                // Provide events so markers are rendered
-                eventLoader: (day) {
-                  final key = DateTime(day.year, day.month, day.day);
-                  return logs[key] ?? [];
-                },
-                calendarBuilders: CalendarBuilders(
-                  markerBuilder: (context, day, events) {
-                    return _buildDayMarkers(
-                      day: day,
-                      logTypes: events.cast<CycleLogType>(),
-                      prediction: prediction,
-                      isPaid: isPaid,
-                    );
-                  },
-                  // Blur future days for free users
-                  defaultBuilder: isPaid
-                      ? null
-                      : (context, day, focusedDay) {
-                          if (day.isAfter(DateTime.now())) {
-                            return _BlurredDay(day: day);
-                          }
-                          return null; // use default rendering
-                        },
-                  outsideBuilder: null,
-                ),
-                onDaySelected: (selected, focused) {
-                  setState(() {
-                    _selectedDay = selected;
-                    _focusedDay = focused;
-                  });
-                  _showDaySheet(
-                    context,
-                    selected,
-                    logs[DateTime(selected.year, selected.month, selected.day)] ?? [],
+                outsideDaysVisible: false,
+              ),
+              eventLoader: (day) {
+                final key = DateTime(day.year, day.month, day.day);
+                return logs[key] ?? [];
+              },
+              calendarBuilders: CalendarBuilders(
+                markerBuilder: (context, day, events) {
+                  return _buildDayMarkers(
+                    day: day,
+                    logTypes: events.cast<CycleLogType>(),
+                    prediction: prediction,
+                    isPaid: isPaid,
                   );
                 },
-                onPageChanged: (focusedDay) {
-                  _focusedDay = focusedDay;
-                  ref
-                      .read(calendarFocusedMonthProvider.notifier)
-                      .set(focusedDay);
-                },
+                defaultBuilder: isPaid
+                    ? null
+                    : (context, day, focusedDay) {
+                        if (day.isAfter(DateTime.now())) {
+                          return _BlurredDay(day: day);
+                        }
+                        return null;
+                      },
+                outsideBuilder: null,
               ),
-              // Paywall banner for free users
-              if (!isPaid)
-                _PaywallBanner(
-                  onUpgrade: () => Navigator.of(context)
-                      .pushNamed(AppRoutes.paywall),
-                ),
-              // Legend
-              const _CalendarLegend(),
-            ],
-          );
-        },
-      ),
+              onDaySelected: (selected, focused) {
+                setState(() {
+                  _selectedDay = selected;
+                  _focusedDay = focused;
+                });
+                _showDaySheet(
+                  context,
+                  selected,
+                  logs[DateTime(selected.year, selected.month, selected.day)] ?? [],
+                );
+              },
+              onPageChanged: (focusedDay) {
+                _focusedDay = focusedDay;
+                ref
+                    .read(calendarFocusedMonthProvider.notifier)
+                    .set(focusedDay);
+              },
+            ),
+            if (!isPaid)
+              _PaywallBanner(
+                onUpgrade: () => context.push(AppRoutes.paywall),
+              ),
+            const _CalendarLegend(),
+          ],
+        );
+      },
     );
   }
 
@@ -225,8 +235,9 @@ class _CalendarLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(
+    final l = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.screenPadding,
         vertical: AppSpacing.sm,
       ),
@@ -234,10 +245,10 @@ class _CalendarLegend extends StatelessWidget {
         spacing: AppSpacing.md,
         runSpacing: AppSpacing.xs,
         children: [
-          _LegendItem(color: AppColors.periodRed, label: 'Period'),
-          _LegendItem(color: AppColors.fertileGreen, label: 'Fertile'),
-          _LegendItem(color: AppColors.accent, label: 'Ovulation'),
-          _LegendItem(color: AppColors.secondary, label: 'Mood'),
+          _LegendItem(color: AppColors.periodRed, label: l.logPeriod),
+          _LegendItem(color: AppColors.fertileGreen, label: l.legendFertile),
+          _LegendItem(color: AppColors.accent, label: l.phaseOvulation),
+          _LegendItem(color: AppColors.secondary, label: l.logMood),
         ],
       ),
     );
@@ -298,7 +309,7 @@ class _PaywallBanner extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Upgrade to see future predictions',
+              AppLocalizations.of(context).calendarUpgradeHint,
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -307,7 +318,7 @@ class _PaywallBanner extends StatelessWidget {
           ),
           TextButton(
             onPressed: onUpgrade,
-            child: const Text('Upgrade'),
+            child: Text(AppLocalizations.of(context).upgradeNow),
           ),
         ],
       ),
@@ -327,10 +338,8 @@ class _DayLogsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final monthNames = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
+    final l = AppLocalizations.of(context);
+    final dateStr = DateFormat.yMMMd().format(day);
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.screenPadding),
@@ -350,13 +359,13 @@ class _DayLogsSheet extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            '${monthNames[day.month]} ${day.day}, ${day.year}',
+            dateStr,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
           if (logTypes.isEmpty)
             Text(
-              'Nothing logged on this day.',
+              l.nothingLoggedDay,
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
@@ -368,7 +377,7 @@ class _DayLogsSheet extends StatelessWidget {
               runSpacing: AppSpacing.sm,
               children: logTypes.map((t) {
                 return Chip(
-                  label: Text(_label(t)),
+                  label: Text(_label(context, t)),
                   backgroundColor: _chipColor(t).withValues(alpha: 0.15),
                   labelStyle: TextStyle(color: _chipColor(t)),
                   side: BorderSide(color: _chipColor(t).withValues(alpha: 0.4)),
@@ -381,11 +390,25 @@ class _DayLogsSheet extends StatelessWidget {
     );
   }
 
-  String _label(CycleLogType t) {
-    return t.value.replaceAll('_', ' ').split(' ').map((w) {
-      if (w.isEmpty) return w;
-      return w[0].toUpperCase() + w.substring(1);
-    }).join(' ');
+  String _label(BuildContext context, CycleLogType t) {
+    final l = AppLocalizations.of(context);
+    return switch (t) {
+      CycleLogType.periodStart => l.logTypePeriodStart,
+      CycleLogType.periodEnd => l.logTypePeriodEnd,
+      CycleLogType.spotting => l.logTypeSpotting,
+      CycleLogType.cramp => l.logTypeCramp,
+      CycleLogType.headache => l.logTypeHeadache,
+      CycleLogType.bloating => l.logTypeBloating,
+      CycleLogType.moodHappy => l.logTypeMoodHappy,
+      CycleLogType.moodSad => l.logTypeMoodSad,
+      CycleLogType.moodAnxious => l.logTypeMoodAnxious,
+      CycleLogType.moodCalm => l.logTypeMoodCalm,
+      CycleLogType.moodIrritable => l.logTypeMoodIrritable,
+      CycleLogType.temperature => l.logTypeTemperature,
+      CycleLogType.dischargeNormal => l.logTypeDischargeNormal,
+      CycleLogType.dischargeUnusual => l.logTypeDischargeUnusual,
+      CycleLogType.note => l.logTypeNote,
+    };
   }
 
   Color _chipColor(CycleLogType t) {

@@ -6,6 +6,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../data/auth_repository.dart';
 import '../../../core/errors/failures.dart';
+import '../../../l10n/l10n.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -29,7 +30,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(AppLocalizations l) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _loading = true;
@@ -44,7 +45,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
-      setState(() => _error = 'Network error. Please try again.');
+      setState(() => _error = l.networkError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -53,8 +54,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
+      appBar: AppBar(title: Text(l.signUp)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.screenPadding),
@@ -66,23 +68,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
+                  decoration: InputDecoration(labelText: l.email),
                   validator: (v) =>
-                      v == null || !v.contains('@') ? 'Enter a valid email' : null,
+                      v == null || !v.contains('@') ? l.invalidEmail : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: _passwordCtrl,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: l.password,
                     suffixIcon: IconButton(
                       icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   validator: (v) =>
-                      v == null || v.length < 6 ? 'Min 6 characters' : null,
+                      v == null || v.length < 6 ? l.minPassword : null,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.sm),
@@ -90,19 +92,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ],
                 const SizedBox(height: AppSpacing.lg),
                 ElevatedButton(
-                  onPressed: _loading ? null : _submit,
+                  onPressed: _loading ? null : () => _submit(l),
                   child: _loading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Create account'),
+                      : Text(l.signUp),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextButton(
                   onPressed: () => context.go(AppRoutes.login),
-                  child: const Text('Already have an account? Sign in'),
+                  child: Text(l.haveAccount),
                 ),
               ],
             ),

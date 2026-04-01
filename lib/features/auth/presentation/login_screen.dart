@@ -6,6 +6,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../data/auth_repository.dart';
 import '../../../core/errors/failures.dart';
+import '../../../l10n/l10n.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -29,7 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(AppLocalizations l) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _loading = true;
@@ -44,7 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on AuthFailure catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
-      setState(() => _error = 'Network error. Please try again.');
+      setState(() => _error = l.networkError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -53,6 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -63,33 +65,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: AppSpacing.xxl),
-                Text('Ayla', style: theme.textTheme.displayLarge),
+                Text(l.appName, style: theme.textTheme.displayLarge),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Your cycle, your way.',
+                  l.tagline,
                   style: theme.textTheme.bodyLarge,
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
+                  decoration: InputDecoration(labelText: l.email),
                   validator: (v) =>
-                      v == null || !v.contains('@') ? 'Enter a valid email' : null,
+                      v == null || !v.contains('@') ? l.invalidEmail : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: _passwordCtrl,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: l.password,
                     suffixIcon: IconButton(
                       icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   validator: (v) =>
-                      v == null || v.length < 6 ? 'Min 6 characters' : null,
+                      v == null || v.length < 6 ? l.minPassword : null,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.sm),
@@ -97,19 +99,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ],
                 const SizedBox(height: AppSpacing.lg),
                 ElevatedButton(
-                  onPressed: _loading ? null : _submit,
+                  onPressed: _loading ? null : () => _submit(l),
                   child: _loading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Sign in'),
+                      : Text(l.signIn),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextButton(
                   onPressed: () => context.go(AppRoutes.register),
-                  child: const Text("Don't have an account? Sign up"),
+                  child: Text(l.noAccount),
                 ),
               ],
             ),
